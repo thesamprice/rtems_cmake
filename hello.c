@@ -51,10 +51,20 @@ void SetupFileSystem(){
 #include <fcntl.h>
 #include <string.h>
 
+
+
+ 
+
+
+ 
+
+
+
 #define FILENAME "core-cpu1.exe"
-#define TEST_OFFSET 0x1000   // Some arbitrary offset
+#define TEST_OFFSET 0x1b3d70   // Some arbitrary offset
+
 #define BUFFER_SIZE 2048
-#define STRESS_COUNT 10000   // Read 10k times
+#define STRESS_COUNT 100000   // Read 100k times
 
 void do_some_work(int fd) {
     char buffer[100];
@@ -67,7 +77,8 @@ int LSeekStressTest() {
     uint32_t value;
     char buffer[BUFFER_SIZE];
     int count = 0;
-    uint32_t EXPECTED_VALUE = 0x0;
+    uint32_t EXPECTED_VALUE = 0x07e8;
+
 
     fd = open(FILENAME, O_RDONLY);
     if (fd == -1) {
@@ -98,9 +109,9 @@ int LSeekStressTest() {
         }
 
         count++;
-
+        memset(buffer, 0x39, sizeof(buffer));
         // Do some other activity every 100 reads
-        if (i % 100 == 0) {
+        if (i % 2 == 0) {
             do_some_work(fd);
         }
     }
