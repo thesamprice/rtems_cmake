@@ -6,7 +6,7 @@ project (CMakeHelloWorld)
 #
 #Set the pkg config path to where rtems packages are
 SET(ENV{RTEMS_PATH} /opt/rtems/6)
-SET(ENV{RTEMS_BSP_NAME} kcu105)
+SET(ENV{RTEMS_BSP_NAME} kcu105_cpu0)
 SET(CMAKE_SYSTEM_PROCESSOR microblaze)
 SET(CMAKE_SYSTEM_VERSION 6)
 SET(CMAKE_SYSTEM_NAME rtems)
@@ -74,11 +74,17 @@ set (CMakeHelloWorld_VERSION_MINOR 0)
 
 #include the subdirectory containing our libs
 
-add_executable (hello_rtems 
+
+execute_process(COMMAND tar -cf ${CMAKE_BINARY_DIR}/config.tar -C ${CMAKE_SOURCE_DIR}/rootfs . )
+execute_process(COMMAND $ENV{RTEMS_PATH}/bin/rtems-bin2c ${CMAKE_BINARY_DIR}/config.tar ${CMAKE_BINARY_DIR}/rootfs)
+
+
+add_executable (fseek_stress_test 
 	init.c
 	hello.c
+	rootfs.c
 )
 
 
 # Indicate which libraries to include during the link process.
-install (TARGETS hello_rtems DESTINATION bin)
+install (TARGETS fseek_stress_test DESTINATION bin)

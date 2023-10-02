@@ -12,5 +12,10 @@
 
 #define CONFIGURE_INIT
 
+#define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS 200
+#define CONFIGURE_USE_IMFS_AS_BASE_FILESYSTEM
+
+
+
 #include <rtems/confdefs.h>
 
