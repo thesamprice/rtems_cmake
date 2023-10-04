@@ -17,5 +17,7 @@
 
 #define CONFIGURE_MICROSECONDS_PER_TICK (100)
 
+#define CONFIGURE_INIT_TASK_STACK_SIZE      (32*1024)
+
 #include <rtems/confdefs.h>
 
