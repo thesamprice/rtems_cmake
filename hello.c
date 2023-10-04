@@ -55,6 +55,53 @@ asm volatile (
         printf("Failure: r3 is %u, expected %u\n", read_value, VALUE_TO_WRITE);
     }
 
+/****   TEST r19 *********/
+read_value = 0;
+printf("Starting Reg r19 \n");
+asm volatile ( 
+        "addik r4, r19, 0\n\t"
+        "addik r19, %1, 0\n\t"
+        "addik r3, %2, 0\n\t"  // Move the immediate value to r3
+        "testloopr19:                 \n\t"    // Label 1
+        "nop                \n\t"    // No operation
+        "addik r3, r3, -1   \n\t"    // Subtract 1 from r3
+        "bneid r3, testloopr19 \n\t"    // If result is not zero, branch to label testloop
+        "addik %0, r19, 0   \n\t"    // Move the value from r22 to read_value
+        "addik r19, r4, 0\n\t"
+        : "=r" (read_value)
+        : "r" (value_to_write), "r" (NUMBER_NOOPS)
+        :  "r4","r3"
+    );
+    if (read_value == VALUE_TO_WRITE) {
+        printf("Success: r19 is still %u\n", read_value);
+    } else {
+        printf("Failure: r19 is %u, expected %u\n", read_value, VALUE_TO_WRITE);
+    }
+
+/****   TEST r19 *********/
+read_value = 0;
+printf("Starting Reg r20 \n");
+asm volatile ( 
+        "addik r4, r20, 0\n\t"
+        "addik r20, %1, 0\n\t"
+        "addik r3, %2, 0\n\t"  // Move the immediate value to r3
+        "testloopr20:                 \n\t"    // Label 1
+        "nop                \n\t"    // No operation
+        "addik r3, r3, -1   \n\t"    // Subtract 1 from r3
+        "bneid r3, testloopr20 \n\t"    // If result is not zero, branch to label testloop
+        "addik %0, r20, 0   \n\t"    // Move the value from r22 to read_value
+        "addik r20, r4, 0\n\t"
+        : "=r" (read_value)
+        : "r" (value_to_write), "r" (NUMBER_NOOPS)
+        :  "r4","r3"
+    );
+    if (read_value == VALUE_TO_WRITE) {
+        printf("Success: r20 is still %u\n", read_value);
+    } else {
+        printf("Failure: r20 is %u, expected %u\n", read_value, VALUE_TO_WRITE);
+    }
+
+
 
     TestRegs();
     InterruptTest();

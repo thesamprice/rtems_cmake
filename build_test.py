@@ -27,10 +27,12 @@ testNames = []
 testNames += ["r2"]
 for x in range(4,14):
     testNames += [f"r{x}"]
+testNames += ["r14"]
 testNames += ["r15"]
+
 for x in range(16,19):
     testNames += [f"r{x}"]
-# testNames += ["r19"] # doesnt like r19
+#testNames += ["r19"] # doesnt like r19
 # testNames += ["r20"] # doesnt is pic register?
 
 
