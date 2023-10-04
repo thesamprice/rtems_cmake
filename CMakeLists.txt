@@ -85,7 +85,7 @@ add_executable (fseek_stress_test
 	# microblaze_disable_dcache.s
 	init.c
 	hello.c
-	rootfs.c
+	# rootfs.c
 )
 # set_property(SOURCE microblaze_disable_icache.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
 # set_property(SOURCE microblaze_disable_dcache.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
