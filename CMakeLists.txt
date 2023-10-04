@@ -1,11 +1,11 @@
 cmake_minimum_required (VERSION 2.8.12)
-project (CMakeHelloWorld)
+project (CMakeHelloWorld C ASM)
 
 #
 # Start of things that should be in a toolchain
 #
 #Set the pkg config path to where rtems packages are
-SET(ENV{RTEMS_PATH} /opt/rtems/6)
+SET(ENV{RTEMS_PATH} /home/sprice5/opt/rtems/6)
 SET(ENV{RTEMS_BSP_NAME} kcu105_cpu0)
 SET(CMAKE_SYSTEM_PROCESSOR microblaze)
 SET(CMAKE_SYSTEM_VERSION 6)
@@ -39,7 +39,7 @@ string( REPLACE  ";" " " PKG_RTEMS_STATIC_LDFLAGS "${PKG_RTEMS_STATIC_LDFLAGS}")
 # Update flags, best practicie is to use _INIT, settings may need to be set
 set(CMAKE_C_FLAGS   ${PKG_RTEMS_CFLAGS} )
 set(CMAKE_CXX_FLAGS ${PKG_RTEMS_CFLAGS})
-
+set(CMAKE_ASM_FLAGS_INIT ${PKG_RTEMS_CFLAGS})
 set(CMAKE_EXE_LINKER_FLAGS_INIT ${PKG_RTEMS_LDFLAGS})
 set(CMAKE_SHARED_LINKER_FLAGS_INIT ${PKG_RTEMS_STATIC_LDFLAGS})
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS ${PKG_RTEMS_STATIC_LDFLAGS})
@@ -78,12 +78,17 @@ set (CMakeHelloWorld_VERSION_MINOR 0)
 execute_process(COMMAND tar -cf ${CMAKE_BINARY_DIR}/config.tar -C ${CMAKE_SOURCE_DIR}/rootfs . )
 execute_process(COMMAND $ENV{RTEMS_PATH}/bin/rtems-bin2c ${CMAKE_BINARY_DIR}/config.tar ${CMAKE_BINARY_DIR}/rootfs)
 
+# SET(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
 
 add_executable (fseek_stress_test 
+	# microblaze_disable_icache.s
+	# microblaze_disable_dcache.s
 	init.c
 	hello.c
 	rootfs.c
 )
+# set_property(SOURCE microblaze_disable_icache.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
+# set_property(SOURCE microblaze_disable_dcache.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
 
 
 # Indicate which libraries to include during the link process.
