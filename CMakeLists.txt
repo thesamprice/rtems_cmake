@@ -35,11 +35,16 @@ SET(CMAKE_OBJCOPY               ${TARGETPREFIX}objcopy)
 string( REPLACE  ";" " " PKG_RTEMS_LDFLAGS "${PKG_RTEMS_LDFLAGS}")
 string( REPLACE  ";" " " PKG_RTEMS_CFLAGS "${PKG_RTEMS_CFLAGS}")
 string( REPLACE  ";" " " PKG_RTEMS_STATIC_LDFLAGS "${PKG_RTEMS_STATIC_LDFLAGS}")
+# -B/opt/rtems/6/microblaze-rtems6/kcu105_cpu0/lib -qrtems -Wall  -L/opt/rtems/6/microblaze-rtems6/kcu105_cpu0/lib
+set(PKG_RTEMS_CFLAGS "${PKG_RTEMS_CFLAGS} -qrtems -B$ENV{RTEMS_PATH}/${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME}${CMAKE_SYSTEM_VERSION}/$ENV{RTEMS_BSP_NAME}/lib")
 
 # Update flags, best practicie is to use _INIT, settings may need to be set
 set(CMAKE_C_FLAGS   ${PKG_RTEMS_CFLAGS} )
 set(CMAKE_CXX_FLAGS ${PKG_RTEMS_CFLAGS})
-set(CMAKE_ASM_FLAGS_INIT ${PKG_RTEMS_CFLAGS})
+set(CMAKE_ASM_FLAGS "-mlittle-endian" )
+string(REPLACE "-mno-xl-soft-div" "" CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS}")
+string(REPLACE "-mno-xl-soft-mul" "" CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS}")
+
 set(CMAKE_EXE_LINKER_FLAGS_INIT ${PKG_RTEMS_LDFLAGS})
 set(CMAKE_SHARED_LINKER_FLAGS_INIT ${PKG_RTEMS_STATIC_LDFLAGS})
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS ${PKG_RTEMS_STATIC_LDFLAGS})
@@ -48,7 +53,7 @@ set( CMAKE_C_FLAGS_INIT PKG_RTEMS_CFLAGS)
 
 # Include the linker script
 set(LINKER_SCRIPT "$ENV{RTEMS_PATH}/${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME}${CMAKE_SYSTEM_VERSION}/$ENV{RTEMS_BSP_NAME}/lib/linkcmds")
-
+message( ${LINKER_SCRIPT})
 # search for programs in the build host directories
 SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM   NEVER)
 
@@ -75,21 +80,28 @@ set (CMakeHelloWorld_VERSION_MINOR 0)
 #include the subdirectory containing our libs
 
 
-execute_process(COMMAND tar -cf ${CMAKE_BINARY_DIR}/config.tar -C ${CMAKE_SOURCE_DIR}/rootfs . )
-execute_process(COMMAND $ENV{RTEMS_PATH}/bin/rtems-bin2c ${CMAKE_BINARY_DIR}/config.tar ${CMAKE_BINARY_DIR}/rootfs)
-
+# execute_process(COMMAND tar -cf ${CMAKE_BINARY_DIR}/config.tar -C ${CMAKE_SOURCE_DIR}/rootfs . )
+# execute_process(COMMAND $ENV{RTEMS_PATH}/bin/rtems-bin2c ${CMAKE_BINARY_DIR}/config.tar ${CMAKE_BINARY_DIR}/rootfs)
 # SET(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
 
 add_executable (fseek_stress_test 
 	# microblaze_disable_icache.s
 	# microblaze_disable_dcache.s
+#	src/divi3.S
+	# src/modsi3.S
+	# src/umodsi3.S
 	init.c
 	hello.c
-	rootfs.c
+	# rootfs.c
 )
 # set_property(SOURCE microblaze_disable_icache.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
 # set_property(SOURCE microblaze_disable_dcache.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
 
-
+target_link_libraries(fseek_stress_test PUBLIC
+        bsd
+      rtemsbsp
+   rtemscpu
+    rtemsdefaultconfig
+)
 # Indicate which libraries to include during the link process.
 install (TARGETS fseek_stress_test DESTINATION bin)
