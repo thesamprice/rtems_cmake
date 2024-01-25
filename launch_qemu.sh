@@ -8,4 +8,4 @@ $RTEMS_PATH/bin/qemu-system-microblazeel \
 -serial pty \
 -display none \
 -dtb qemu/kcu105.dtb \
--kernel build/fseek_stress_test
+-kernel build/file_system_test

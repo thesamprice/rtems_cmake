@@ -5,8 +5,8 @@ project (CMakeHelloWorld)
 # Start of things that should be in a toolchain
 #
 #Set the pkg config path to where rtems packages are
-SET(ENV{RTEMS_PATH} /opt/rtems/6)
-SET(ENV{RTEMS_BSP_NAME} kcu105_cpu0)
+SET(ENV{RTEMS_PATH} /home/sprice5/opt/rtems/6)
+SET(ENV{RTEMS_BSP_NAME} kcu105_qemu)
 SET(CMAKE_SYSTEM_PROCESSOR microblaze)
 SET(CMAKE_SYSTEM_VERSION 6)
 SET(CMAKE_SYSTEM_NAME rtems)
@@ -31,18 +31,20 @@ SET(CMAKE_AR                    ${TARGETPREFIX}ar)
 SET(CMAKE_OBJDUMP               ${TARGETPREFIX}objdump)
 SET(CMAKE_OBJCOPY               ${TARGETPREFIX}objcopy)
 
+set(EXT_SYMS " -Wl,-u,fopen -Wl,-u,fgets -Wl,-u,fclose -Wl,-u,sscanf ")
+
 # Seems like package config uses ; in flags, replace with spaces
-string( REPLACE  ";" " " PKG_RTEMS_LDFLAGS "${PKG_RTEMS_LDFLAGS}")
+string( REPLACE  ";" " " PKG_RTEMS_LDFLAGS "${EXT_SYMS} ${PKG_RTEMS_LDFLAGS}")
 string( REPLACE  ";" " " PKG_RTEMS_CFLAGS "${PKG_RTEMS_CFLAGS}")
-string( REPLACE  ";" " " PKG_RTEMS_STATIC_LDFLAGS "${PKG_RTEMS_STATIC_LDFLAGS}")
+string( REPLACE  ";" " " PKG_RTEMS_STATIC_LDFLAGS "${EXT_SYMS} ${PKG_RTEMS_STATIC_LDFLAGS}")
 
 # Update flags, best practicie is to use _INIT, settings may need to be set
-set(CMAKE_C_FLAGS   ${PKG_RTEMS_CFLAGS} )
+set(CMAKE_C_FLAGS   ${PKG_RTEMS_CFLAGS})
 set(CMAKE_CXX_FLAGS ${PKG_RTEMS_CFLAGS})
 
-set(CMAKE_EXE_LINKER_FLAGS_INIT ${PKG_RTEMS_LDFLAGS})
-set(CMAKE_SHARED_LINKER_FLAGS_INIT ${PKG_RTEMS_STATIC_LDFLAGS})
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS ${PKG_RTEMS_STATIC_LDFLAGS})
+set(CMAKE_EXE_LINKER_FLAGS_INIT ${PKG_RTEMS_LDFLAGS}  )
+set(CMAKE_SHARED_LINKER_FLAGS_INIT  ${PKG_RTEMS_STATIC_LDFLAGS} )
+set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS  ${PKG_RTEMS_STATIC_LDFLAGS} )
 #set( CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "" )
 set( CMAKE_C_FLAGS_INIT PKG_RTEMS_CFLAGS)
 
@@ -74,17 +76,28 @@ set (CMakeHelloWorld_VERSION_MINOR 0)
 
 #include the subdirectory containing our libs
 
-
-execute_process(COMMAND tar -cf ${CMAKE_BINARY_DIR}/config.tar -C ${CMAKE_SOURCE_DIR}/rootfs . )
-execute_process(COMMAND $ENV{RTEMS_PATH}/bin/rtems-bin2c ${CMAKE_BINARY_DIR}/config.tar ${CMAKE_BINARY_DIR}/rootfs)
-
-
-add_executable (fseek_stress_test 
-	init.c
-	hello.c
-	rootfs.c
+add_library(my_test OBJECT
+	src/object_test.cpp
 )
 
 
-# Indicate which libraries to include during the link process.
-install (TARGETS fseek_stress_test DESTINATION bin)
+add_custom_command(
+	OUTPUT rootfs.c
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_OBJECTS:my_test> ${CMAKE_SOURCE_DIR}/rootfs/
+	COMMAND tar -cf ${CMAKE_BINARY_DIR}/config.tar -C ${CMAKE_SOURCE_DIR}/rootfs . 
+	COMMAND $ENV{RTEMS_PATH}/bin/rtems-bin2c ${CMAKE_BINARY_DIR}/config.tar ${CMAKE_BINARY_DIR}/rootfs
+	DEPENDS my_test
+	COMMENT "Generating rootfs.c"
+
+)
+
+add_custom_target(rootfs_c_target ALL
+    DEPENDS rootfs.c
+)
+add_executable (file_system_test  
+	init.c
+	hello.c
+	${CMAKE_BINARY_DIR}/rootfs.c
+)
+
+

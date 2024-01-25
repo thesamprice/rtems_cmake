@@ -6,27 +6,33 @@
 #include <stdio.h>
 
 #include <rtems/shell.h>
+#include <rtems/rtl/dlfcn-shell.h>
+#include <dlfcn.h>
+#include <rtems/rtl/rap-shell.h>
+#include <rtems/rtl/rtl-shell.h>
 #include <rtems/untar.h>
+#include <rtems/bdbuf.h>
+#include <rtems/error.h>
 
-void SetupFileSystem();
-int LSeekStressTest();
-
+void SetupFileSystem(void);
+void add_dl_commands(void);
+void shell_start(void);
 rtems_task Init(
   rtems_task_argument ignored
 )
 {
-    rtems_status_code sc = RTEMS_SUCCESSFUL;
+  rtems_status_code sc = RTEMS_SUCCESSFUL;
 
   SetupFileSystem();
-LSeekStressTest();
-
+  add_dl_commands();
+  shell_start();
 
   printf( "\nHello World\n" );
   exit( 0 );
 }
 
 
-void SetupFileSystem(){
+void SetupFileSystem(void){
     extern const unsigned char config_tar[];
     extern const size_t config_tar_size;
     if (config_tar_size > 0)
@@ -42,71 +48,27 @@ void SetupFileSystem(){
     }
 }
 
+void add_dl_commands(void)
+{
+   rtems_shell_add_cmd("dlopen","misc","dynamic loader dlopen",shell_dlopen);
+   rtems_shell_add_cmd("dlclose","misc","dynamic loader dlclose",shell_dlclose);
+   rtems_shell_add_cmd("dlsym","misc","dynamic loader dlsym",shell_dlsym);
+   rtems_shell_add_cmd("dlcall","misc","dynamic loader dlcall",shell_dlcall);
 
+   rtems_shell_add_cmd("rap","misc","dynamic loader rap command",shell_rap);
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-
-#define FILENAME "core-cpu1.exe"
-#define TEST_OFFSET 0x1000   // Some arbitrary offset
-#define BUFFER_SIZE 2048
-#define STRESS_COUNT 10000   // Read 10k times
-
-void do_some_work(int fd) {
-    char buffer[100];
-    lseek(fd, 0x2000, SEEK_SET); // Seek to a different offset
-    read(fd, buffer, sizeof(buffer)); // Read some data from the new offset
+   rtems_shell_add_cmd("rtl","misc","dynamic loader rtl command",rtems_rtl_shell_command);
 }
 
-int LSeekStressTest() {
-    int fd;
-    uint32_t value;
-    char buffer[BUFFER_SIZE];
-    int count = 0;
-    uint32_t EXPECTED_VALUE = 0x0;
+void shell_start(void)
+{
+    rtems_status_code sc;
 
-    fd = open(FILENAME, O_RDONLY);
-    if (fd == -1) {
-        perror("Failed to open file");
-        exit(1);
+    printf("Starting shell....\n\n");
+
+    sc = rtems_shell_init("shell0", 20 * 1024, 100, "/dev/console", 0, 1, NULL);
+    if (sc != RTEMS_SUCCESSFUL)
+    {
+        printf("error: starting shell: %s (%d)\n", rtems_status_text(sc), sc);
     }
-
-    for (int i = 0; i < STRESS_COUNT; i++) {
-        lseek(fd, TEST_OFFSET, SEEK_SET);
-        if (read(fd, buffer, BUFFER_SIZE) != BUFFER_SIZE) {
-            perror("Failed to read from file");
-            close(fd);
-            exit(1);
-        }
-
-
-
-        memcpy(&value, buffer, sizeof(value));
-
-        if(i == 0){
-          EXPECTED_VALUE = value;
-        }
-
-        if (value != EXPECTED_VALUE) {
-            printf("Mismatched value at iteration %d. Expected: 0x%x, Got: 0x%x\n",
-                   i, EXPECTED_VALUE, value);
-            break;
-        }
-
-        count++;
-
-        // Do some other activity every 100 reads
-        if (i % 100 == 0) {
-            do_some_work(fd);
-        }
-    }
-
-    printf("Completed %d reads successfully\n", count);
-
-    close(fd);
-    return 0;
 }
